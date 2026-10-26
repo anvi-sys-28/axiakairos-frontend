@@ -150,16 +150,13 @@ const DEFAULT_SITEMAP_ROUTES = [
 ];
 
 export const CONTENT_SECTIONS: { id: ActiveView; label: string }[] = [
-  { id: 'HomePage', label: 'Home Page' },
-  { id: 'service', label: 'Services (12)' },
-  { id: 'caseStudyPage', label: 'Case Studies (6)' },
-  { id: 'IndustryPage', label: 'Industries (10)' },
-  { id: 'blogPage', label: 'Blogs & Insights' },
-  { id: 'CareerPage', label: 'Careers & Jobs' },
-  { id: 'AboutUsPage', label: 'About Us' },
-  { id: 'ContactPage', label: 'Contact Page' },
-  { id: 'PrivacyPolicyPage', label: 'Legal Policies' },
-  { id: 'Navbar', label: 'Navbar & Footer' },
+  { id: 'HomePage', label: 'Home page' },
+  { id: 'AboutUsPage', label: 'About' },
+  { id: 'service', label: 'Services' },
+  { id: 'caseStudyPage', label: 'Case Studies' },
+  { id: 'CareerPage', label: 'Careers' },
+  { id: 'blogPage', label: 'Blogs' },
+  { id: 'ContactPage', label: 'Contact' },
 ];
 
 export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAdminDashboardProps) {
@@ -341,30 +338,53 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
           </div>
 
           {/* 1. Content Management */}
-          <button
-            type="button"
-            onClick={() => {
-              setMainNav('content_management');
-              setActiveView(contentSection || 'HomePage');
-            }}
-            className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
-              mainNav === 'content_management'
-                ? 'bg-[#4945ff] text-white shadow-sm'
-                : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <Layers className="w-4 h-4" />
-              <span>Content management</span>
-            </div>
-            <span
-              className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-                mainNav === 'content_management' ? 'bg-white/20 text-white' : 'bg-[#edf2f7] text-[#8c9ba5]'
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                setMainNav('content_management');
+                setActiveView(contentSection || 'HomePage');
+              }}
+              className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+                mainNav === 'content_management'
+                  ? 'bg-[#4945ff] text-white shadow-sm'
+                  : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
               }`}
             >
-              CMS
-            </span>
-          </button>
+              <div className="flex items-center gap-2.5">
+                <Layers className="w-4 h-4" />
+                <span>Content management</span>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                  mainNav === 'content_management' ? 'rotate-180 text-white/80' : 'text-[#8c9ba5]'
+                }`}
+              />
+            </button>
+
+            {/* Sub-options: Home page, About, Services, Case Studies, Careers, Blogs, Contact */}
+            {mainNav === 'content_management' && (
+              <div className="mt-1.5 ml-3 pl-3 border-l-2 border-[#e3e7f0] space-y-0.5 py-1 animate-in fade-in duration-150">
+                {CONTENT_SECTIONS.map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => {
+                      setContentSection(sub.id);
+                      setActiveView(sub.id);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded-md text-[11.5px] font-medium transition-colors ${
+                      activeView === sub.id
+                        ? 'bg-[#f0f3ff] text-[#4945ff] font-bold'
+                        : 'text-[#667085] hover:bg-[#f6f8fb] hover:text-[#272b33]'
+                    }`}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* 2. Site maps */}
           <button
@@ -1938,16 +1958,63 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
           )}
 
           {/* ========================================================
-              VIEW 10: ContactPage (Corporate Contacts & Hubs)
+              VIEW: ContactPage (Contact)
               ======================================================== */}
           {activeView === 'ContactPage' && !jsonMode && (
             <div className="space-y-6 max-w-[1020px]">
+              {/* Header & Inquiries Overview */}
               <div className="border border-[#e3e7f0] rounded-lg bg-white p-5 shadow-xs space-y-4">
-                <h3 className="font-bold text-sm text-[#272b33]">
-                  Contact Information & Official Communication Channels
-                </h3>
+                <div className="flex items-center justify-between border-b border-[#e3e7f0] pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-[#272b33]">
+                      Contact Page Header & Inquiries
+                    </h3>
+                    <p className="text-xs text-[#8c9ba5]">
+                      Manage public contact details, advisory emails, and global enterprise phone channels.
+                    </p>
+                  </div>
+                  <span className="bg-[#eafbe7] text-[#288226] border border-[#bbf2b6] text-[11px] font-semibold px-2 py-0.5 rounded">
+                    Active
+                  </span>
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Contact Page Title
+                    </label>
+                    <input
+                      type="text"
+                      value={cmsData.contactPage?.title || 'Contact Axia Kairos'}
+                      onChange={(e) =>
+                        setCmsData({
+                          ...cmsData,
+                          contactPage: { ...cmsData.contactPage, title: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Header Subtitle
+                    </label>
+                    <input
+                      type="text"
+                      value={cmsData.contactPage?.subtitle || 'Connect with our global principal consultants and client advisors.'}
+                      onChange={(e) =>
+                        setCmsData({
+                          ...cmsData,
+                          contactPage: { ...cmsData.contactPage, subtitle: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Routing Channels */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                   <div>
                     <label className="block text-xs font-semibold text-[#4a5568] mb-1">
                       General Inquiries Email
@@ -1964,13 +2031,13 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
                           },
                         })
                       }
-                      className="w-full px-3 py-2 text-xs rounded border border-[#e3e7f0]"
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] font-mono"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-[#4a5568] mb-1">
-                      Direct Sales & Consulting Email
+                      Sales & Client Advisory Email
                     </label>
                     <input
                       type="email"
@@ -1984,15 +2051,36 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
                           },
                         })
                       }
-                      className="w-full px-3 py-2 text-xs rounded border border-[#e3e7f0]"
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Careers & Talent Email
+                    </label>
+                    <input
+                      type="email"
+                      value={cmsData.contactPage?.emails?.careers || 'careers@axiakairos.com'}
+                      onChange={(e) =>
+                        setCmsData({
+                          ...cmsData,
+                          contactPage: {
+                            ...cmsData.contactPage,
+                            emails: { ...cmsData.contactPage?.emails, careers: e.target.value },
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] font-mono"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Phone & HQ */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div>
                     <label className="block text-xs font-semibold text-[#4a5568] mb-1">
-                      Direct Contact Phone
+                      Direct Advisory Phone
                     </label>
                     <input
                       type="text"
@@ -2006,42 +2094,101 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
                           },
                         })
                       }
-                      className="w-full px-3 py-2 text-xs rounded border border-[#e3e7f0]"
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] font-mono"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#4a5568] mb-1">
-                      Global Headquarters Location
+                      Corporate Office Visits & Address Notice
                     </label>
                     <input
                       type="text"
-                      value={cmsData.aboutUsPage?.headquarters || 'Toronto, Ontario, Canada'}
+                      value={cmsData.contactPage?.noteOnStreetAddresses || 'Specific facility street addresses and appointments are coordinated directly through our client engagement team.'}
                       onChange={(e) =>
                         setCmsData({
                           ...cmsData,
-                          aboutUsPage: {
-                            ...cmsData.aboutUsPage,
-                            headquarters: e.target.value,
+                          contactPage: {
+                            ...cmsData.contactPage,
+                            noteOnStreetAddresses: e.target.value,
                           },
                         })
                       }
-                      className="w-full px-3 py-2 text-xs rounded border border-[#e3e7f0]"
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0]"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Global Operating Hubs */}
+              <div className="border border-[#e3e7f0] rounded-lg bg-white p-5 shadow-xs space-y-4">
+                <h3 className="font-bold text-sm text-[#272b33]">
+                  Global Operating Hubs ({cmsData.contactPage?.offices?.length || 4})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(cmsData.contactPage?.offices || []).map((office, idx) => (
+                    <div key={office.country || idx} className="p-3 rounded-lg border border-[#e3e7f0] bg-[#fcfdfe] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-[#272b33] flex items-center gap-1.5">
+                          <span>{office.flag}</span>
+                          <span>{office.country}</span>
+                        </span>
+                        <span className="text-[10px] font-semibold text-[#288226] bg-[#eafbe7] px-2 py-0.5 rounded">
+                          {office.status}
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={office.region}
+                        onChange={(e) => {
+                          const updated = [...(cmsData.contactPage?.offices || [])];
+                          updated[idx] = { ...updated[idx], region: e.target.value };
+                          setCmsData({
+                            ...cmsData,
+                            contactPage: { ...cmsData.contactPage, offices: updated },
+                          });
+                        }}
+                        className="w-full px-2.5 py-1 text-xs rounded border border-[#e3e7f0] bg-white font-medium"
+                      />
+                      <input
+                        type="text"
+                        value={office.note}
+                        onChange={(e) => {
+                          const updated = [...(cmsData.contactPage?.offices || [])];
+                          updated[idx] = { ...updated[idx], note: e.target.value };
+                          setCmsData({
+                            ...cmsData,
+                            contactPage: { ...cmsData.contactPage, offices: updated },
+                          });
+                        }}
+                        className="w-full px-2.5 py-1 text-[11px] rounded border border-[#e3e7f0] bg-white text-[#667085]"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
 
           {/* ========================================================
-              VIEW 11: AboutUsPage (Corporate Mission & Pillars)
+              VIEW: AboutUsPage (About)
               ======================================================== */}
           {activeView === 'AboutUsPage' && !jsonMode && (
             <div className="space-y-6 max-w-[1020px]">
+              {/* Mission & Vision */}
               <div className="border border-[#e3e7f0] rounded-lg bg-white p-5 shadow-xs space-y-4">
-                <h3 className="font-bold text-sm text-[#272b33]">
-                  About Axia Kairos & Corporate Vision
-                </h3>
+                <div className="flex items-center justify-between border-b border-[#e3e7f0] pb-3">
+                  <div>
+                    <h3 className="font-bold text-sm text-[#272b33]">
+                      About Axia Kairos & Corporate Vision
+                    </h3>
+                    <p className="text-xs text-[#8c9ba5]">
+                      Manage corporate purpose, executive mission, tagline, and firm profile.
+                    </p>
+                  </div>
+                  <span className="bg-[#eafbe7] text-[#288226] border border-[#bbf2b6] text-[11px] font-semibold px-2 py-0.5 rounded">
+                    Published
+                  </span>
+                </div>
 
                 <div className="space-y-3">
                   <div>
@@ -2050,39 +2197,127 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
                     </label>
                     <input
                       type="text"
-                      value={cmsData.aboutUsPage?.tagline || 'Insight that shapes tomorrow. Execution that defines excellence.'}
+                      value={cmsData.aboutUsPage?.tagline || 'Strategic consultants, digital architects, and transformation leaders empowering global enterprises.'}
                       onChange={(e) =>
                         setCmsData({
                           ...cmsData,
-                          aboutUsPage: {
-                            ...cmsData.aboutUsPage,
-                            tagline: e.target.value,
-                          },
+                          aboutUsPage: { ...cmsData.aboutUsPage, tagline: e.target.value },
                         })
                       }
-                      className="w-full px-3 py-2 text-xs rounded border border-[#e3e7f0]"
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
                     />
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-[#4a5568] mb-1">
-                      Company Mission Statement
+                      Corporate Overview Narrative
                     </label>
                     <textarea
                       rows={3}
-                      value={cmsData.aboutUsPage?.mission || 'To empower global enterprises to achieve transformative growth...'}
+                      value={cmsData.aboutUsPage?.overview || 'Axia Kairos is a global management and technology consulting firm. We partner with business leaders to architect and deliver digital transformations that build resilience, elevate customer experiences, and drive sustainable growth.'}
                       onChange={(e) =>
                         setCmsData({
                           ...cmsData,
-                          aboutUsPage: {
-                            ...cmsData.aboutUsPage,
-                            mission: e.target.value,
-                          },
+                          aboutUsPage: { ...cmsData.aboutUsPage, overview: e.target.value },
                         })
                       }
-                      className="w-full px-3 py-2 text-xs rounded border border-[#e3e7f0]"
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
                     />
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                        Company Mission Statement
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={cmsData.aboutUsPage?.mission || 'To empower global enterprises to achieve transformative, sustainable growth by orchestrating state-of-the-art technology, data intelligence, and human ingenuity.'}
+                        onChange={(e) =>
+                          setCmsData({
+                            ...cmsData,
+                            aboutUsPage: { ...cmsData.aboutUsPage, mission: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                        Company Vision Statement
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={cmsData.aboutUsPage?.vision || 'To be the most trusted transformation partner for enterprise leaders worldwide, recognized for deep domain expertise, disciplined delivery, and measurable client success.'}
+                        onChange={(e) =>
+                          setCmsData({
+                            ...cmsData,
+                            aboutUsPage: { ...cmsData.aboutUsPage, vision: e.target.value },
+                          })
+                        }
+                        className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Global Headquarters Location
+                    </label>
+                    <input
+                      type="text"
+                      value={cmsData.aboutUsPage?.headquarters || 'Global operations with primary hubs in North America and India.'}
+                      onChange={(e) =>
+                        setCmsData({
+                          ...cmsData,
+                          aboutUsPage: { ...cmsData.aboutUsPage, headquarters: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Core Values */}
+              <div className="border border-[#e3e7f0] rounded-lg bg-white p-5 shadow-xs space-y-4">
+                <h3 className="font-bold text-sm text-[#272b33]">
+                  Core Enterprise Values ({cmsData.aboutUsPage?.values?.length || 5})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(cmsData.aboutUsPage?.values || []).map((val, idx) => (
+                    <div key={val.name || idx} className="p-3 rounded-lg border border-[#e3e7f0] bg-[#fcfdfe] space-y-2">
+                      <label className="block text-xs font-bold text-[#4945ff]">
+                        Value {idx + 1}: {val.name}
+                      </label>
+                      <input
+                        type="text"
+                        value={val.name}
+                        onChange={(e) => {
+                          const updated = [...(cmsData.aboutUsPage?.values || [])];
+                          updated[idx] = { ...updated[idx], name: e.target.value };
+                          setCmsData({
+                            ...cmsData,
+                            aboutUsPage: { ...cmsData.aboutUsPage, values: updated },
+                          });
+                        }}
+                        className="w-full px-2.5 py-1 text-xs rounded border border-[#e3e7f0] bg-white font-semibold"
+                      />
+                      <textarea
+                        rows={2}
+                        value={val.description}
+                        onChange={(e) => {
+                          const updated = [...(cmsData.aboutUsPage?.values || [])];
+                          updated[idx] = { ...updated[idx], description: e.target.value };
+                          setCmsData({
+                            ...cmsData,
+                            aboutUsPage: { ...cmsData.aboutUsPage, values: updated },
+                          });
+                        }}
+                        className="w-full px-2.5 py-1 text-xs rounded border border-[#e3e7f0] bg-white text-[#4a5568]"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
