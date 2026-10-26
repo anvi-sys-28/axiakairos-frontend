@@ -6,6 +6,22 @@ import { SEO } from '../components/SEO';
 import { ServiceRequestForm } from '../components/ServiceRequestForm';
 import { getServiceBySlug, caseStudiesData } from '../data/services';
 
+// Curated related background images for each enterprise service capability
+const SERVICE_HERO_BG_MAP: Record<string, string> = {
+  'sap-implementation-advisory-and-support': '/assets/blogs/top-5-challenges-in-sap-migration-and-how-to-overcome-them.webp',
+  'cloud-platform-modernization': '/assets/blogs/cloud-modernization-the-foundation-of-scalable-enterprise-growth.webp',
+  'cyber-security-services': '/assets/blogs/the-new-frontier-of-cybersecurity-building-enterprise-resilience.webp',
+  'data-engineering-and-analytics': '/assets/blogs/data-driven-decisions-how-analytics-transforms-enterprise-strategy.webp',
+  'ai-blockchain-and-io-t-integration': '/assets/blogs/io-t-and-ai-driving-the-next-wave-of-intelligent-enterprise-operations.webp',
+  'business-process-automation': '/assets/blogs/automation-beyond-efficiency-building-smarter-enterprises-with-ai.webp',
+  'application-managed-it-services': '/assets/blogs/why-managed-it-services-are-vital-for-enterprise-agility.webp',
+  'digital-transformation-1': '/assets/blogs/how-digital-transformation-drives-sustainable-business-growth.webp',
+  'e-commerce-solutions': '/assets/blogs/redefining-customer-journeys-through-digital-commerce-solutions.webp',
+  'management-consulting': '/assets/case-studies/public-sector-data-analytics-automation.webp',
+  'mobility-and-app-development': '/assets/case-studies/logistics-sap-automation-integration.webp',
+  'web-development': '/assets/case-studies/cloud-modernization-retail.webp',
+};
+
 export function ServiceDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const service = getServiceBySlug(slug || '');
@@ -44,6 +60,7 @@ export function ServiceDetailPage() {
     .filter(Boolean);
 
   const canonicalUrl = `https://axiakairos.com/services/${service.slug}`;
+  const heroBackgroundImage = SERVICE_HERO_BG_MAP[service.slug] || service.intro?.image || '/assets/card_sunset.webp';
 
   return (
     <div className="min-h-screen w-full bg-white dark:bg-[#05080e] text-slate-900 dark:text-slate-100 flex flex-col selection:bg-axia-slate/20 transition-colors duration-300">
@@ -100,28 +117,79 @@ export function ServiceDetailPage() {
 
       <main className="w-full flex-1 flex flex-col pt-24 sm:pt-28">
         
-        {/* Section 1: Hero Header */}
-        <section className="relative w-full py-12 sm:py-16 lg:py-20 bg-gradient-to-b from-slate-50 via-white to-white dark:from-[#09111e] dark:via-[#060c16] dark:to-[#05080e] border-b border-slate-200/70 dark:border-white/10">
-          <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+        {/* Section 1: Hero Header with Thematic Background Image */}
+        <section className="relative w-full py-16 sm:py-20 lg:py-28 overflow-hidden border-b border-slate-200/80 dark:border-white/10 bg-slate-900">
+          
+          {/* Background Image & Thematic Scrim Layer */}
+          <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
+            <img
+              src={heroBackgroundImage}
+              alt={`${service.title} Architecture Background`}
+              fetchPriority="high"
+              decoding="async"
+              className="w-full h-full object-cover object-center filter brightness-[0.9] dark:brightness-[0.4] contrast-[1.08] scale-105 transition-transform duration-1000 ease-out"
+            />
             
-            {/* Back to Services Link */}
-            <Link
-              to="/services"
-              className="inline-flex items-center text-xs font-mono uppercase tracking-widest text-[#6784a3] hover:text-[#0b192c] dark:hover:text-white transition-colors mb-6 group select-none"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 mr-2 transition-transform duration-200 group-hover:-translate-x-1" />
-              <span>Back to Services</span>
-            </Link>
+            {/* Light Theme: Multi-layer soft gradient ensuring bold, legible text */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/40 dark:hidden" />
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-white/60 dark:hidden" />
+            
+            {/* Dark Theme: Cinematic midnight gradient */}
+            <div className="absolute inset-0 hidden dark:block bg-gradient-to-r from-[#05080e]/95 via-[#070e1a]/85 to-[#05080e]/40" />
+            <div className="absolute inset-0 hidden dark:block bg-gradient-to-t from-[#05080e] via-transparent to-[#05080e]/70" />
+
+            {/* Ambient luxury accent glow */}
+            <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#c2a675]/15 dark:bg-[#c2a675]/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 right-1/3 w-80 h-80 bg-cyan-500/10 dark:bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
+            
+            {/* Subtle micro-dot pattern overlay */}
+            <div className="absolute inset-0 bg-[radial-gradient(#0b192c_1px,transparent_1px)] dark:bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.03] dark:opacity-[0.04]" />
+          </div>
+
+          <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+            
+            {/* Top Navigation & Service Category Badge */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <Link
+                to="/services"
+                className="inline-flex items-center text-xs font-mono uppercase tracking-widest text-[#6784a3] hover:text-[#0b192c] dark:hover:text-white transition-colors group select-none"
+              >
+                <ArrowLeft className="w-3.5 h-3.5 mr-2 transition-transform duration-200 group-hover:-translate-x-1" />
+                <span>Back to Services</span>
+              </Link>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#c2a675]/15 border border-[#c2a675]/30 text-[10px] font-mono tracking-widest uppercase text-[#9e7c40] dark:text-[#c2a675] font-semibold backdrop-blur-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#c2a675] animate-pulse" />
+                Enterprise Solution
+              </span>
+            </div>
 
             {/* H1 Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#0b192c] dark:text-white tracking-tight leading-[1.08] max-w-4xl">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#0b192c] dark:text-white tracking-tight leading-[1.08] max-w-4xl drop-shadow-sm">
               {service.title}
             </h1>
 
             {/* Tagline */}
-            <p className="mt-4 sm:mt-5 text-lg sm:text-xl lg:text-2xl font-light text-[#6784a3] dark:text-slate-300 max-w-3xl leading-relaxed">
+            <p className="mt-4 sm:mt-5 text-lg sm:text-xl lg:text-2xl font-light text-slate-700 dark:text-slate-200 max-w-3xl leading-relaxed">
               {service.hero.tagline}
             </p>
+
+            {/* Quick Action CTAs */}
+            <div className="mt-8 flex flex-wrap items-center gap-4 pt-2">
+              <a
+                href="#request-service"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-[#0b192c] dark:bg-white text-white dark:text-[#0b192c] text-xs font-bold tracking-wider uppercase shadow-md hover:opacity-90 transition-all hover:shadow-lg"
+              >
+                <span>Request Consultation</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-2" />
+              </a>
+              <a
+                href="#portfolio"
+                className="inline-flex items-center px-6 py-3 rounded-full bg-white/85 dark:bg-white/10 text-slate-800 dark:text-white border border-slate-300/80 dark:border-white/20 text-xs font-semibold tracking-wider uppercase backdrop-blur-sm hover:bg-white dark:hover:bg-white/20 transition-all"
+              >
+                <span>Explore Capabilities</span>
+              </a>
+            </div>
 
           </div>
         </section>
