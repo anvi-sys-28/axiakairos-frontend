@@ -71,7 +71,7 @@ export function ServicesIndexPage() {
       <main className="w-full flex-1 flex flex-col">
         
         {/* Page Hero with Theme-Aware Background Images */}
-        <section className="relative w-full pt-32 sm:pt-36 lg:pt-40 pb-16 sm:pb-20 lg:pb-24 overflow-hidden flex flex-col items-center justify-center">
+        <section className="relative w-full pt-28 sm:pt-32 lg:pt-36 pb-14 sm:pb-16 lg:pb-20 overflow-hidden flex flex-col items-center justify-center">
           
           {/* Background Images */}
           <div className="absolute inset-0 z-0 pointer-events-none select-none overflow-hidden">

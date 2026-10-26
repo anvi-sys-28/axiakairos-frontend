@@ -117,10 +117,10 @@ export function ServiceDetailPage() {
       {/* Header (with integrated SunMoonThemeToggle) */}
       <Header onCtaClick={() => (window.location.href = '#request-service')} />
 
-      <main className="w-full flex-1 flex flex-col pt-24 sm:pt-28">
+      <main className="w-full flex-1 flex flex-col pt-20 sm:pt-24">
         
         {/* Section 1: Hero Header with Thematic Background Image */}
-        <section className="relative w-full py-16 sm:py-20 lg:py-28 overflow-hidden border-b border-slate-200/80 dark:border-white/10 bg-slate-900">
+        <section className="relative w-full py-14 sm:py-16 lg:py-24 overflow-hidden border-b border-slate-200/80 dark:border-white/10 bg-slate-900">
           
           {/* Background Image & Thematic Scrim Layer */}
           <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
@@ -151,7 +151,7 @@ export function ServiceDetailPage() {
           <div className="relative z-10 max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
             
             {/* Top Navigation & Service Category Badge */}
-            <div className="flex flex-wrap items-center gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-3 mb-5">
               <Link
                 to="/services"
                 className="inline-flex items-center text-xs font-mono uppercase tracking-widest text-[#6784a3] hover:text-[#0b192c] dark:hover:text-white transition-colors group select-none"
@@ -172,12 +172,12 @@ export function ServiceDetailPage() {
             </h1>
 
             {/* Tagline */}
-            <p className="mt-4 sm:mt-5 text-lg sm:text-xl lg:text-2xl font-light text-slate-700 dark:text-slate-200 max-w-3xl leading-relaxed">
+            <p className="mt-3.5 sm:mt-4 text-lg sm:text-xl lg:text-2xl font-light text-slate-700 dark:text-slate-200 max-w-3xl leading-relaxed">
               {service.hero.tagline}
             </p>
 
             {/* Quick Action CTAs */}
-            <div className="mt-8 flex flex-wrap items-center gap-4 pt-2">
+            <div className="mt-7 flex flex-wrap items-center gap-4 pt-1">
               <a
                 href="#request-service"
                 className="inline-flex items-center px-6 py-3 rounded-full bg-[#0b192c] dark:bg-white text-white dark:text-[#0b192c] text-xs font-bold tracking-wider uppercase shadow-md hover:opacity-90 transition-all hover:shadow-lg"
