@@ -33,6 +33,16 @@ import {
   FileText,
   Bot,
   Sparkles,
+  Layers,
+  Network,
+  Inbox,
+  Bell,
+  Send,
+  SendHorizontal,
+  Radio,
+  MapPin,
+  Globe,
+  Copy,
 } from 'lucide-react';
 import {
   fetchAdminMessages,
@@ -72,10 +82,90 @@ type ActiveView =
   | 'redirect'
   | 'sitemap'
   | 'User'
-  | 'inbox';
+  | 'inbox'
+  | 'notification';
+
+export type MainNavOption =
+  | 'content_management'
+  | 'sitemaps'
+  | 'chatbot'
+  | 'incoming_requests'
+  | 'send_notification';
+
+interface NotificationHistoryItem {
+  id: string;
+  title: string;
+  target: string;
+  type: string;
+  sentAt: string;
+  status: 'Sent' | 'Scheduled';
+  recipientsCount: number;
+}
+
+const INITIAL_NOTIFICATIONS: NotificationHistoryItem[] = [
+  {
+    id: 'notif-1',
+    title: 'Q4 Enterprise Digital Transformation Whitepaper Released',
+    target: 'All Inquiries & Form Contacts',
+    type: 'Announcement',
+    sentAt: '2026-10-24 14:30',
+    status: 'Sent',
+    recipientsCount: 48,
+  },
+  {
+    id: 'notif-2',
+    title: 'Scheduled SAP S/4HANA Architecture Briefing Session',
+    target: 'Qualified Enterprise Leads',
+    type: 'Consultation Follow-up',
+    sentAt: '2026-10-22 10:15',
+    status: 'Sent',
+    recipientsCount: 19,
+  },
+  {
+    id: 'notif-3',
+    title: 'Axia Kairos Cloud Resilience & Security Advisory Note',
+    target: 'All Inquiries & Form Contacts',
+    type: 'Security Advisory',
+    sentAt: '2026-10-18 16:45',
+    status: 'Sent',
+    recipientsCount: 64,
+  },
+];
+
+const DEFAULT_SITEMAP_ROUTES = [
+  { url: '/', title: 'Home - Enterprise Digital Transformation', priority: '1.0', changefreq: 'weekly', status: 'Indexed' },
+  { url: '/services', title: 'Services Directory (12 Services)', priority: '0.9', changefreq: 'weekly', status: 'Indexed' },
+  { url: '/services/sap-implementation-advisory-and-support', title: 'SAP Implementation, Advisory & Support', priority: '0.8', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/services/cloud-platform-modernization', title: 'Cloud Platform Modernization', priority: '0.8', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/services/cyber-security-services', title: 'Cyber Security & Resilience Services', priority: '0.8', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/services/data-engineering-and-analytics', title: 'Data Engineering & Analytics', priority: '0.8', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/services/ai-blockchain-and-io-t-integration', title: 'Enterprise AI, Blockchain & IoT', priority: '0.8', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/case-studies', title: 'Case Studies Hub (6 Case Studies)', priority: '0.8', changefreq: 'weekly', status: 'Indexed' },
+  { url: '/careers', title: 'Careers & Global Talent Portal', priority: '0.7', changefreq: 'weekly', status: 'Indexed' },
+  { url: '/blogs', title: 'Blogs & Executive Insights', priority: '0.7', changefreq: 'daily', status: 'Indexed' },
+  { url: '/contact', title: 'Contact Us & Advisory Request', priority: '0.9', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/about', title: 'About Axia Kairos & Leadership', priority: '0.7', changefreq: 'monthly', status: 'Indexed' },
+  { url: '/privacy-policy', title: 'Privacy Policy & Data Notice', priority: '0.3', changefreq: 'yearly', status: 'Indexed' },
+  { url: '/terms-and-conditions', title: 'Terms and Conditions', priority: '0.3', changefreq: 'yearly', status: 'Indexed' },
+];
+
+export const CONTENT_SECTIONS: { id: ActiveView; label: string }[] = [
+  { id: 'HomePage', label: 'Home Page' },
+  { id: 'service', label: 'Services (12)' },
+  { id: 'caseStudyPage', label: 'Case Studies (6)' },
+  { id: 'IndustryPage', label: 'Industries (10)' },
+  { id: 'blogPage', label: 'Blogs & Insights' },
+  { id: 'CareerPage', label: 'Careers & Jobs' },
+  { id: 'AboutUsPage', label: 'About Us' },
+  { id: 'ContactPage', label: 'Contact Page' },
+  { id: 'PrivacyPolicyPage', label: 'Legal Policies' },
+  { id: 'Navbar', label: 'Navbar & Footer' },
+];
 
 export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAdminDashboardProps) {
   const [cmsData, setCmsData] = useState<CMSData>(loadCMSData);
+  const [mainNav, setMainNav] = useState<MainNavOption>('content_management');
+  const [contentSection, setContentSection] = useState<ActiveView>('HomePage');
   const [activeView, setActiveView] = useState<ActiveView>('HomePage');
   const [activeTab, setActiveTab] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT');
   const [heroExpanded, setHeroExpanded] = useState(true);
@@ -83,6 +173,19 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
   const [sidebarFilter, setSidebarFilter] = useState('');
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [jsonMode, setJsonMode] = useState(false);
+
+  // Notification state
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifTarget, setNotifTarget] = useState('All Inquiries & Form Contacts');
+  const [notifType, setNotifType] = useState('Announcement');
+  const [notifMessage, setNotifMessage] = useState('');
+  const [notifCtaLabel, setNotifCtaLabel] = useState('View Details');
+  const [notifCtaUrl, setNotifCtaUrl] = useState('https://axiakairos.com');
+  const [notifHistory, setNotifHistory] = useState<NotificationHistoryItem[]>(INITIAL_NOTIFICATIONS);
+  const [isSendingNotif, setIsSendingNotif] = useState(false);
+
+  // Sitemap state
+  const [sitemapList, setSitemapList] = useState(DEFAULT_SITEMAP_ROUTES);
 
   // Inquiries state (preserved from previous dashboard)
   const [messages, setMessages] = useState<ContactMessageRecord[]>([]);
@@ -213,182 +316,182 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
       )}
 
       {/* ========================================================
-          1. FAR LEFT SLIM SIDEBAR (56px Icon Nav)
+          CLEAN MAIN SIDE NAVIGATION (5 Core Options)
           ======================================================== */}
-      <aside className="w-[56px] shrink-0 bg-[#ffffff] border-r border-[#e3e7f0] flex flex-col items-center py-3 justify-between z-30">
-        <div className="flex flex-col items-center gap-4 w-full">
-          {/* Brand Logo Square */}
-          <button
-            type="button"
-            onClick={() => setActiveView('HomePage')}
-            className="w-9 h-9 rounded-lg bg-[#4945ff] text-white flex items-center justify-center font-bold text-base shadow-sm hover:opacity-95 transition-all"
-            title="Axia Kairos CMS"
-          >
-            A
-          </button>
-
-          {/* Navigation Icons Stack */}
-          <nav className="flex flex-col items-center gap-1.5 w-full px-1">
-            <button
-              type="button"
-              onClick={() => setActiveView('HomePage')}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-                activeView === 'HomePage'
-                  ? 'text-[#4945ff] bg-[#f0f3ff]'
-                  : 'text-[#8c9ba5] hover:text-[#4945ff] hover:bg-[#f0f3ff]'
-              }`}
-              title="Dashboard"
-            >
-              <LayoutDashboard className="w-5 h-5" strokeWidth={1.75} />
-            </button>
-
-            {/* Active Pen/Feather Icon with blue indicator (Content Manager) */}
-            <div className="relative w-full flex items-center justify-center">
-              <button
-                type="button"
-                onClick={() => setActiveView('HomePage')}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-[#4945ff] bg-[#f0f3ff] transition-all"
-                title="Content Manager"
-              >
-                <Feather className="w-5 h-5" strokeWidth={2} />
-              </button>
-              <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-[#4945ff] rounded-r" />
+      <aside className="w-[260px] shrink-0 bg-white border-r border-[#e3e7f0] flex flex-col h-full z-20">
+        
+        {/* Brand Header */}
+        <div className="p-4 border-b border-[#e3e7f0] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#4945ff] text-white flex items-center justify-center font-bold text-base shadow-sm">
+              A
             </div>
-
-            <button
-              type="button"
-              onClick={() => setActiveView('ProductPage')}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-[#8c9ba5] hover:text-[#4945ff] hover:bg-[#f0f3ff] transition-all"
-              title="Media Library"
-            >
-              <ImageIcon className="w-5 h-5" strokeWidth={1.75} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView('service')}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-[#8c9ba5] hover:text-[#4945ff] hover:bg-[#f0f3ff] transition-all"
-              title="Content-Type Builder"
-            >
-              <Boxes className="w-5 h-5" strokeWidth={1.75} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView('inbox')}
-              className={`w-10 h-10 rounded-lg flex items-center justify-center relative transition-all ${
-                activeView === 'inbox'
-                  ? 'text-[#4945ff] bg-[#f0f3ff]'
-                  : 'text-[#8c9ba5] hover:text-[#4945ff] hover:bg-[#f0f3ff]'
-              }`}
-              title="Inquiries & Messages"
-            >
-              <Mail className="w-5 h-5" strokeWidth={1.75} />
-              {messages.length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#4945ff]" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView('robot')}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-[#8c9ba5] hover:text-[#4945ff] hover:bg-[#f0f3ff] transition-all"
-              title="Chatbot & AI"
-            >
-              <Bot className="w-5 h-5" strokeWidth={1.75} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveView('llm')}
-              className="w-10 h-10 rounded-lg flex items-center justify-center relative text-[#8c9ba5] hover:text-[#4945ff] hover:bg-[#f0f3ff] transition-all"
-              title="Settings"
-            >
-              <Settings className="w-5 h-5" strokeWidth={1.75} />
-              <span className="absolute top-1.5 right-1.5 bg-[#4945ff] text-white text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
-                1
-              </span>
-            </button>
-          </nav>
+            <div>
+              <div className="font-bold text-sm text-[#272b33] tracking-tight">AXIA KAIROS</div>
+              <div className="text-[11px] text-[#8c9ba5] font-mono">Admin Portal</div>
+            </div>
+          </div>
+          <span className="w-2 h-2 rounded-full bg-[#288226]" title="Database Online" />
         </div>
 
-        {/* User Avatar Circle (ZG) & Logout */}
-        <div className="flex flex-col items-center gap-2">
+        {/* The 5 Main Options */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+          <div className="text-[10px] font-mono tracking-widest uppercase text-[#8c9ba5] px-3 py-1 font-semibold">
+            CORE MODULES
+          </div>
+
+          {/* 1. Content Management */}
           <button
             type="button"
-            onClick={onLogout}
-            className="w-9 h-9 rounded-full bg-[#4945ff] text-white font-bold text-xs flex items-center justify-center shadow-xs hover:ring-2 hover:ring-[#4945ff]/40 transition-all cursor-pointer"
-            title={`${user.username} (${user.role}) - Click to Log Out`}
+            onClick={() => {
+              setMainNav('content_management');
+              setActiveView(contentSection || 'HomePage');
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+              mainNav === 'content_management'
+                ? 'bg-[#4945ff] text-white shadow-sm'
+                : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
+            }`}
           >
-            ZG
+            <div className="flex items-center gap-2.5">
+              <Layers className="w-4 h-4" />
+              <span>Content management</span>
+            </div>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                mainNav === 'content_management' ? 'bg-white/20 text-white' : 'bg-[#edf2f7] text-[#8c9ba5]'
+              }`}
+            >
+              CMS
+            </span>
           </button>
-        </div>
-      </aside>
 
-      {/* ========================================================
-          2. SECOND LEFT SIDEBAR (Content Models Tree)
-          ======================================================== */}
-      <aside className="w-[240px] shrink-0 bg-[#ffffff] border-r border-[#e3e7f0] flex flex-col h-full z-20">
-        {/* Search Input */}
-        <div className="p-3 border-b border-[#e3e7f0]">
-          <div className="relative">
-            <Search className="w-4 h-4 text-[#8c9ba5] absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search content..."
-              value={sidebarFilter}
-              onChange={(e) => setSidebarFilter(e.target.value)}
-              className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-md bg-[#f6f8fb] border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff] transition-colors"
-            />
-          </div>
-        </div>
+          {/* 2. Site maps */}
+          <button
+            type="button"
+            onClick={() => {
+              setMainNav('sitemaps');
+              setActiveView('sitemap');
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+              mainNav === 'sitemaps'
+                ? 'bg-[#4945ff] text-white shadow-sm'
+                : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Network className="w-4 h-4" />
+              <span>Site maps</span>
+            </div>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                mainNav === 'sitemaps' ? 'bg-white/20 text-white' : 'bg-[#edf2f7] text-[#8c9ba5]'
+              }`}
+            >
+              {sitemapList.length}
+            </span>
+          </button>
 
-        {/* Scrollable Tree */}
-        <div className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
-          {/* Collection Types */}
-          <div className="space-y-0.5">
-            {filteredCollectionTypes.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setActiveView(item.id)}
-                className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors ${
-                  activeView === item.id
-                    ? 'bg-[#f0f3ff] text-[#4945ff] font-semibold'
-                    : 'text-[#4a5568] hover:bg-[#f6f8fb] hover:text-[#272b33]'
+          {/* 3. Chatbot Bot */}
+          <button
+            type="button"
+            onClick={() => {
+              setMainNav('chatbot');
+              setActiveView('llm');
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+              mainNav === 'chatbot'
+                ? 'bg-[#4945ff] text-white shadow-sm'
+                : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Bot className="w-4 h-4" />
+              <span>Chatbot Bot</span>
+            </div>
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                mainNav === 'chatbot' ? 'bg-white/20 text-white' : 'bg-[#edf2f7] text-[#8c9ba5]'
+              }`}
+            >
+              AI
+            </span>
+          </button>
+
+          {/* 4. Incoming requests from the contact page */}
+          <button
+            type="button"
+            onClick={() => {
+              setMainNav('incoming_requests');
+              setActiveView('inbox');
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+              mainNav === 'incoming_requests'
+                ? 'bg-[#4945ff] text-white shadow-sm'
+                : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Inbox className="w-4 h-4" />
+              <span>Incoming requests from the contact page</span>
+            </div>
+            {messages.length > 0 && (
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  mainNav === 'incoming_requests' ? 'bg-white text-[#4945ff]' : 'bg-[#4945ff] text-white'
                 }`}
               >
-                <span>{item.label}</span>
-                {item.count !== undefined && (
-                  <span className="text-[10px] font-mono text-[#8c9ba5] bg-[#edf2f7] px-1.5 py-0.5 rounded">
-                    {item.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+                {messages.length}
+              </span>
+            )}
+          </button>
 
-          {/* SINGLE TYPES Header */}
-          <div>
-            <div className="text-[10.5px] font-bold text-[#8c9ba5] tracking-wider uppercase px-3 pb-1">
-              SINGLE TYPES
+          {/* 5. Send notification option */}
+          <button
+            type="button"
+            onClick={() => {
+              setMainNav('send_notification');
+              setActiveView('notification');
+            }}
+            className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-all ${
+              mainNav === 'send_notification'
+                ? 'bg-[#4945ff] text-white shadow-sm'
+                : 'text-[#4a5568] hover:bg-[#f0f3ff] hover:text-[#4945ff]'
+            }`}
+          >
+            <div className="flex items-center gap-2.5">
+              <Bell className="w-4 h-4" />
+              <span>Send notification option</span>
             </div>
-            <div className="space-y-0.5">
-              {filteredSingleTypes.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveView(item.id)}
-                  className={`w-full text-left px-3 py-1.5 rounded-md text-xs font-medium flex items-center justify-between transition-colors ${
-                    activeView === item.id
-                      ? 'bg-[#f0f3ff] text-[#4945ff] font-semibold'
-                      : 'text-[#4a5568] hover:bg-[#f6f8fb] hover:text-[#272b33]'
-                  }`}
-                >
-                  <span className="truncate">{item.label}</span>
-                </button>
-              ))}
+            <span
+              className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                mainNav === 'send_notification' ? 'bg-white/20 text-white' : 'bg-[#edf2f7] text-[#8c9ba5]'
+              }`}
+            >
+              Push
+            </span>
+          </button>
+        </div>
+
+        {/* Sidebar Footer with Administrator Profile & Quick Logout */}
+        <div className="p-3 border-t border-[#e3e7f0] bg-[#fcfdfe] space-y-2">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-[#4945ff] text-white font-bold text-xs flex items-center justify-center">
+                {user.username.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="truncate">
+                <div className="text-xs font-semibold text-[#272b33] leading-none truncate">{user.username}</div>
+                <div className="text-[10px] text-[#8c9ba5] leading-none mt-1">{user.role}</div>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="text-[11px] text-[#e03131] hover:underline font-semibold"
+            >
+              Log out
+            </button>
           </div>
         </div>
       </aside>
@@ -402,21 +505,32 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
           <div className="flex flex-col gap-1.5">
             <button
               type="button"
-              onClick={() => setActiveView('HomePage')}
+              onClick={() => {
+                setMainNav('content_management');
+                setActiveView('HomePage');
+              }}
               className="text-[#4945ff] hover:underline flex items-center gap-1.5 text-xs font-semibold"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
+              <span>Back to Content Management</span>
             </button>
 
             <div className="flex items-center gap-3">
               <h1 className="text-xl font-bold text-[#272b33] tracking-tight">
-                {activeView === 'HomePage'
-                  ? cmsData.documentId
-                  : `${activeView} Content`}
+                {mainNav === 'content_management'
+                  ? `Content Management • ${
+                      CONTENT_SECTIONS.find((s) => s.id === activeView)?.label || activeView
+                    }`
+                  : mainNav === 'sitemaps'
+                  ? 'Site Maps & Route Governance'
+                  : mainNav === 'chatbot'
+                  ? 'Chatbot Bot Command Center'
+                  : mainNav === 'incoming_requests'
+                  ? `Incoming Requests from Contact Page (${messages.length})`
+                  : 'Send Notification Option'}
               </h1>
               <span className="bg-[#eafbe7] text-[#288226] border border-[#bbf2b6] text-[11px] font-semibold px-2.5 py-0.5 rounded">
-                Published
+                Published & Live
               </span>
             </div>
 
@@ -470,6 +584,32 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
             </button>
           </div>
         </header>
+
+        {/* Content Management Sub-Sections Bar */}
+        {mainNav === 'content_management' && (
+          <div className="bg-white border-b border-[#e3e7f0] px-8 py-2.5 flex items-center gap-2 overflow-x-auto shrink-0 shadow-xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#8c9ba5] mr-1 shrink-0">
+              Active Section:
+            </span>
+            {CONTENT_SECTIONS.map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => {
+                  setContentSection(sec.id);
+                  setActiveView(sec.id);
+                }}
+                className={`px-3 py-1 rounded-md text-xs font-semibold shrink-0 transition-all ${
+                  activeView === sec.id
+                    ? 'bg-[#4945ff] text-white shadow-xs'
+                    : 'bg-[#f6f8fb] text-[#4a5568] hover:bg-[#edf2f7] hover:text-[#272b33]'
+                }`}
+              >
+                {sec.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Scrollable Form Body */}
         <div className="flex-1 overflow-y-auto p-8 space-y-6">
@@ -1485,6 +1625,27 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
                       Rejects hallucinated unverified claims below this threshold.
                     </p>
                   </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      OpenAI API Secret Key
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="sk-proj-..."
+                      value={cmsData.llm.apiKey || ''}
+                      onChange={(e) =>
+                        setCmsData({
+                          ...cmsData,
+                          llm: { ...cmsData.llm, apiKey: e.target.value },
+                        })
+                      }
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] bg-white font-mono"
+                    />
+                    <p className="text-[11px] text-[#8c9ba5] mt-1">
+                      Configure custom OpenAI API key for live chatbot inference. Falls back to server environment variable if left blank.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="p-3 bg-[#f6f8ff] border border-[#d8e0ff] rounded-md flex items-center justify-between">
@@ -1928,10 +2089,337 @@ export default function StrapiAdminDashboard({ token, user, onLogout }: StrapiAd
           )}
 
           {/* ========================================================
+              VIEW 12: Site Maps & Route Governance
+              ======================================================== */}
+          {activeView === 'sitemap' && !jsonMode && (
+            <div className="space-y-6 max-w-[1020px]">
+              {/* Header card with metrics */}
+              <div className="border border-[#e3e7f0] rounded-lg bg-white p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-[#f0f3ff] border border-[#d8e0ff] flex items-center justify-center text-[#4945ff]">
+                    <Network className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[#272b33]">
+                      Site Maps & Route Governance ({sitemapList.length} Routes)
+                    </h2>
+                    <p className="text-xs text-[#8c9ba5]">
+                      Canonical domain: <span className="font-mono text-[#4945ff]">https://axiakairos.com</span> · XML endpoint: <span className="font-mono text-[#288226]">/sitemap.xml</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapList
+                        .map(
+                          (r) =>
+                            `  <url>\n    <loc>https://axiakairos.com${r.url}</loc>\n    <changefreq>${r.changefreq}</changefreq>\n    <priority>${r.priority}</priority>\n  </url>`
+                        )
+                        .join('\n')}\n</urlset>`;
+                      const blob = new Blob([xml], { type: 'application/xml' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'sitemap.xml';
+                      a.click();
+                      triggerToast('sitemap.xml exported successfully!');
+                    }}
+                    className="px-3 py-1.5 rounded-md border border-[#e3e7f0] hover:bg-[#f6f8fb] text-[#4a5568] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5 text-[#8c9ba5]" />
+                    <span>Download XML</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newUrl = prompt('Enter new route path (e.g. /insights/new-whitepaper):');
+                      if (!newUrl) return;
+                      const newTitle = prompt('Enter route title:') || 'Custom Route';
+                      setSitemapList([
+                        ...sitemapList,
+                        { url: newUrl.startsWith('/') ? newUrl : `/${newUrl}`, title: newTitle, priority: '0.7', changefreq: 'monthly', status: 'Indexed' },
+                      ]);
+                      triggerToast(`Route "${newUrl}" added to sitemap!`);
+                    }}
+                    className="px-3 py-1.5 rounded-md bg-[#4945ff] text-white text-xs font-semibold hover:bg-[#3d38ee] flex items-center gap-1.5 shadow-xs transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Route</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Sitemap table */}
+              <div className="border border-[#e3e7f0] rounded-lg bg-white overflow-hidden shadow-xs">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#fcfdfe] border-b border-[#e3e7f0] text-[11px] font-bold text-[#8c9ba5] uppercase">
+                      <th className="py-3 px-4">Route Path</th>
+                      <th className="py-3 px-4">Page Title</th>
+                      <th className="py-3 px-4">Priority</th>
+                      <th className="py-3 px-4">Change Frequency</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e3e7f0] text-xs">
+                    {sitemapList.map((route) => (
+                      <tr key={route.url} className="hover:bg-[#f8faff] transition-colors">
+                        <td className="py-3 px-4 font-mono font-medium text-[#4945ff]">
+                          {route.url}
+                        </td>
+                        <td className="py-3 px-4 text-[#272b33] font-medium">
+                          {route.title}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
+                              Number(route.priority) >= 0.9
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : Number(route.priority) >= 0.7
+                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {route.priority}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-[#667085] capitalize">
+                          {route.changefreq}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center gap-1 text-[#288226] text-[11px] font-semibold bg-[#eafbe7] border border-[#bbf2b6] px-2 py-0.5 rounded">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#288226]" />
+                            {route.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`https://axiakairos.com${route.url}`);
+                              triggerToast(`Copied: https://axiakairos.com${route.url}`);
+                            }}
+                            className="p-1 text-[#8c9ba5] hover:text-[#4945ff] rounded transition-colors"
+                            title="Copy Canonical URL"
+                          >
+                            <Copy className="w-3.5 h-3.5 inline" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================
+              VIEW 13: Send Notification Option
+              ======================================================== */}
+          {activeView === 'notification' && !jsonMode && (
+            <div className="space-y-6 max-w-[1020px]">
+              {/* Notification Composer */}
+              <div className="border border-[#e3e7f0] rounded-lg bg-white p-5 shadow-xs space-y-5">
+                <div className="flex items-center justify-between border-b border-[#e3e7f0] pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#fff4e6] border border-[#ffd8a8] flex items-center justify-center text-[#d9480f]">
+                      <Bell className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold text-[#272b33]">
+                        Send Notification & Client Broadcast
+                      </h2>
+                      <p className="text-xs text-[#8c9ba5]">
+                        Dispatch push updates, announcements, and advisory alerts to client contacts and website visitors.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="bg-[#f0f3ff] text-[#4945ff] border border-[#d8e0ff] text-xs font-bold px-2.5 py-1 rounded flex items-center gap-1.5">
+                    <Radio className="w-3.5 h-3.5 text-[#4945ff] animate-pulse" />
+                    Broadcast Dispatcher Active
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Target Audience / Recipient Segment
+                    </label>
+                    <select
+                      value={notifTarget}
+                      onChange={(e) => setNotifTarget(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] bg-white font-medium focus:outline-none focus:border-[#4945ff]"
+                    >
+                      <option value="All Inquiries & Form Contacts">All Inquiries & Form Contacts ({messages.length} Active Records)</option>
+                      <option value="Enterprise Leads">Qualified Enterprise Leads</option>
+                      <option value="Advisory Inquirers">Executive Advisory Inquirers</option>
+                      <option value="All Visitors">Live Portal Visitors (Global Scrim Banner)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Notification Category
+                    </label>
+                    <select
+                      value={notifType}
+                      onChange={(e) => setNotifType(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] bg-white font-medium focus:outline-none focus:border-[#4945ff]"
+                    >
+                      <option value="Announcement">Enterprise Announcement</option>
+                      <option value="Consultation Follow-up">Consultation Follow-up</option>
+                      <option value="Security Advisory">Security & Architecture Advisory</option>
+                      <option value="Service Launch">Service & Capability Update</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Notification Subject / Headline
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Axia Kairos Releases 2026 Cloud Resilience Framework"
+                      value={notifTitle}
+                      onChange={(e) => setNotifTitle(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                      Broadcast Message Body
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder="Enter detailed message text to be dispatched..."
+                      value={notifMessage}
+                      onChange={(e) => setNotifMessage(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                        Call-to-Action (CTA) Label
+                      </label>
+                      <input
+                        type="text"
+                        value={notifCtaLabel}
+                        onChange={(e) => setNotifCtaLabel(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#4a5568] mb-1">
+                        CTA Destination URL
+                      </label>
+                      <input
+                        type="text"
+                        value={notifCtaUrl}
+                        onChange={(e) => setNotifCtaUrl(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-md border border-[#e3e7f0] focus:outline-none focus:border-[#4945ff]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    disabled={isSendingNotif || !notifTitle.trim()}
+                    onClick={() => {
+                      if (!notifTitle.trim()) {
+                        alert('Please enter a notification subject');
+                        return;
+                      }
+                      setIsSendingNotif(true);
+                      setTimeout(() => {
+                        const newEntry: NotificationHistoryItem = {
+                          id: `notif-${Date.now()}`,
+                          title: notifTitle,
+                          target: notifTarget,
+                          type: notifType,
+                          sentAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
+                          status: 'Sent',
+                          recipientsCount: messages.length > 0 ? messages.length : 24,
+                        };
+                        setNotifHistory([newEntry, ...notifHistory]);
+                        setNotifTitle('');
+                        setNotifMessage('');
+                        setIsSendingNotif(false);
+                        triggerToast(`Notification "${newEntry.title}" sent successfully to ${newEntry.target}!`);
+                      }, 700);
+                    }}
+                    className={`px-4 py-2 rounded-md bg-[#4945ff] hover:bg-[#3d38ee] text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors ${
+                      isSendingNotif || !notifTitle.trim() ? 'opacity-60 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <SendHorizontal className="w-3.5 h-3.5" />
+                    <span>{isSendingNotif ? 'Dispatching Broadcast...' : 'Send Notification Now'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Notification History */}
+              <div className="border border-[#e3e7f0] rounded-lg bg-white overflow-hidden shadow-xs">
+                <div className="px-5 py-3 border-b border-[#e3e7f0] bg-[#fcfdfe] flex items-center justify-between">
+                  <span className="font-bold text-xs text-[#272b33]">
+                    Sent Broadcast History ({notifHistory.length})
+                  </span>
+                  <span className="text-[11px] text-[#8c9ba5]">Dispatched via Admin Service</span>
+                </div>
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#fcfdfe] border-b border-[#e3e7f0] text-[11px] font-bold text-[#8c9ba5] uppercase">
+                      <th className="py-3 px-4">Subject</th>
+                      <th className="py-3 px-4">Target Audience</th>
+                      <th className="py-3 px-4">Type</th>
+                      <th className="py-3 px-4">Dispatched At</th>
+                      <th className="py-3 px-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#e3e7f0] text-xs">
+                    {notifHistory.map((item) => (
+                      <tr key={item.id} className="hover:bg-[#f8faff] transition-colors">
+                        <td className="py-3 px-4 font-semibold text-[#272b33]">
+                          {item.title}
+                        </td>
+                        <td className="py-3 px-4 text-[#4a5568]">
+                          {item.target} ({item.recipientsCount} contacts)
+                        </td>
+                        <td className="py-3 px-4 text-[#667085]">
+                          {item.type}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] text-[#8c9ba5]">
+                          {item.sentAt}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-flex items-center gap-1 text-[#288226] text-[11px] font-semibold bg-[#eafbe7] border border-[#bbf2b6] px-2 py-0.5 rounded">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#288226]" />
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================
               FALLBACK / JSON MODE: For remaining views or when JSON mode is toggled
               ======================================================== */}
           {(jsonMode ||
-            !['HomePage', 'service', 'blogPage', 'Navbar', 'robot', 'inbox', 'llm', 'caseStudyPage', 'CareerPage', 'ContactPage', 'AboutUsPage'].includes(
+            !['HomePage', 'service', 'blogPage', 'Navbar', 'robot', 'inbox', 'llm', 'caseStudyPage', 'CareerPage', 'ContactPage', 'AboutUsPage', 'sitemap', 'notification'].includes(
               activeView
             )) && (
             <div className="p-8 border border-[#e3e7f0] rounded-lg bg-white shadow-xs space-y-4 max-w-[1020px]">

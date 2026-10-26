@@ -73,6 +73,7 @@ export interface CMSData {
   llm: {
     model: string;
     provider?: 'openai' | 'anthropic';
+    apiKey?: string;
     temperature: number;
     maxTokens: number;
     searchEnabled: boolean;
