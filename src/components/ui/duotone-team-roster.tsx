@@ -542,7 +542,7 @@ function Portrait(props: {
         ) : (
           <div className="dtr-plate" aria-hidden="true">
             <span>{member ? initials(member.name) : (role && role.mark) || "You?"}</span>
-            {role ? <em>{role.title}</em> : null}
+            <em>{member ? member.name : (role ? role.title : null)}</em>
           </div>
         )}
       </div>

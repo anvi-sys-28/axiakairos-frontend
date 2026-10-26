@@ -101,6 +101,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/about-us" element={<AboutPage />} />
           <Route path="/services" element={<ServicesIndexPage />} />
           <Route path="/services/:slug" element={<ServiceDetailPage />} />
           <Route path="/case-studies" element={<CaseStudiesIndexPage />} />

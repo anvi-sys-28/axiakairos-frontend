@@ -92,6 +92,65 @@ const cityCoordinates: Record<string, [number, number]> = {
   chicago: [41.8781, -87.6298],
 };
 
+export interface OperatingHub {
+  id: string;
+  name: string;
+  hub: string;
+  flag: string;
+  coords: [number, number]; // [longitude, latitude]
+  color: string;
+  glowColor: string;
+  isoIds: (string | number)[];
+  countryNames: string[];
+}
+
+export const OPERATING_HUBS: OperatingHub[] = [
+  {
+    id: "CAN",
+    name: "Canada",
+    hub: "Toronto",
+    flag: "🇨🇦",
+    coords: [-79.3832, 43.6532],
+    color: "#38bdf8",
+    glowColor: "rgba(56, 189, 248, 0.4)",
+    isoIds: ["124", 124],
+    countryNames: ["canada"],
+  },
+  {
+    id: "USA",
+    name: "USA",
+    hub: "New York",
+    flag: "🇺🇸",
+    coords: [-74.006, 40.7128],
+    color: "#60a5fa",
+    glowColor: "rgba(96, 165, 250, 0.4)",
+    isoIds: ["840", 840],
+    countryNames: ["united states", "united states of america", "usa"],
+  },
+  {
+    id: "IND",
+    name: "India",
+    hub: "Bangalore",
+    flag: "🇮🇳",
+    coords: [77.5946, 12.9716],
+    color: "#f59e0b",
+    glowColor: "rgba(245, 158, 11, 0.4)",
+    isoIds: ["356", 356],
+    countryNames: ["india"],
+  },
+  {
+    id: "ARE",
+    name: "UAE",
+    hub: "Dubai",
+    flag: "🇦🇪",
+    coords: [55.2708, 25.2048],
+    color: "#10b981",
+    glowColor: "rgba(16, 185, 129, 0.4)",
+    isoIds: ["784", 784],
+    countryNames: ["united arab emirates", "uae"],
+  },
+];
+
 function orthographicRaw(x: number, y: number): [number, number] {
   const cosy = Math.cos(y);
   return [cosy * Math.sin(x), Math.sin(y)];
@@ -544,10 +603,50 @@ function GlobeWireframe({
           return "";
         }
       })
-      .attr("fill", finalCountryFill)
-      .attr("stroke", defaultStrokeColor)
-      .attr("stroke-width", finalStrokeWidth)
-      .attr("opacity", finalOpacity)
+      .attr("fill", (d: any) => {
+        const id = d.id;
+        const name = (d.properties?.name || "").toLowerCase();
+        const matched = OPERATING_HUBS.find(
+          (h) => h.isoIds.includes(id) || h.countryNames.includes(name)
+        );
+        if (matched) {
+          return matched.glowColor;
+        }
+        return finalCountryFill;
+      })
+      .attr("stroke", (d: any) => {
+        const id = d.id;
+        const name = (d.properties?.name || "").toLowerCase();
+        const matched = OPERATING_HUBS.find(
+          (h) => h.isoIds.includes(id) || h.countryNames.includes(name)
+        );
+        if (matched) {
+          return matched.color;
+        }
+        return defaultStrokeColor;
+      })
+      .attr("stroke-width", (d: any) => {
+        const id = d.id;
+        const name = (d.properties?.name || "").toLowerCase();
+        const matched = OPERATING_HUBS.find(
+          (h) => h.isoIds.includes(id) || h.countryNames.includes(name)
+        );
+        if (matched) {
+          return 1.4;
+        }
+        return finalStrokeWidth;
+      })
+      .attr("opacity", (d: any) => {
+        const id = d.id;
+        const name = (d.properties?.name || "").toLowerCase();
+        const matched = OPERATING_HUBS.find(
+          (h) => h.isoIds.includes(id) || h.countryNames.includes(name)
+        );
+        if (matched) {
+          return 1.0;
+        }
+        return finalOpacity;
+      })
       .style("visibility", function (this: SVGPathElement) {
         const pathData = d3.select(this).attr("d");
         return pathData && pathData.length > 0 && !pathData.includes("NaN")
@@ -580,6 +679,123 @@ function GlobeWireframe({
     } catch (error) {
       console.error("Error creating sphere outline:", error);
     }
+
+    // ==========================================
+    // Operating Hubs: Animated Location Pins
+    // ==========================================
+    const pinsGroup = svg.append("g").attr("class", "operating-pins");
+
+    OPERATING_HUBS.forEach((hub) => {
+      const centerLon = -rotation[0];
+      const centerLat = -rotation[1];
+      const dist = d3.geoDistance(hub.coords, [centerLon, centerLat]);
+
+      // Render if front-facing (dist < ~88 degrees, or < 1.54 rad)
+      if (dist < 1.54) {
+        const coords = projection(hub.coords);
+        if (!coords || isNaN(coords[0]) || isNaN(coords[1])) return;
+
+        const [x, y] = coords;
+        // Fade smoothly as it rotates towards the sphere edge
+        const edgeOpacity = Math.max(0, Math.min(1, (1.54 - dist) / 0.22));
+
+        const pinG = pinsGroup
+          .append("g")
+          .attr("class", `pin-${hub.id}`)
+          .attr("transform", `translate(${x}, ${y})`)
+          .attr("opacity", edgeOpacity)
+          .style("pointer-events", "none");
+
+        // 1. Radar wave expanding pulse animation
+        const pingCircle = pinG
+          .append("circle")
+          .attr("r", 4)
+          .attr("fill", "none")
+          .attr("stroke", hub.color)
+          .attr("stroke-width", 1.5);
+
+        pingCircle
+          .append("animate")
+          .attr("attributeName", "r")
+          .attr("values", "4; 16; 4")
+          .attr("dur", "2.2s")
+          .attr("repeatCount", "indefinite");
+
+        pingCircle
+          .append("animate")
+          .attr("attributeName", "opacity")
+          .attr("values", "0.9; 0; 0.9")
+          .attr("dur", "2.2s")
+          .attr("repeatCount", "indefinite");
+
+        // 2. Center anchor dot on the globe surface
+        pinG
+          .append("circle")
+          .attr("r", 3)
+          .attr("fill", hub.color)
+          .attr("stroke", "#ffffff")
+          .attr("stroke-width", 1);
+
+        // 3. Pointer Pin icon floating above
+        const pinStem = pinG.append("g");
+        pinStem
+          .append("animateTransform")
+          .attr("attributeName", "transform")
+          .attr("type", "translate")
+          .attr("values", "0,0; 0,-2.5; 0,0")
+          .attr("dur", "2s")
+          .attr("repeatCount", "indefinite");
+
+        // Pin body path (tip at 0, -2, bulb at 0, -14)
+        pinStem
+          .append("path")
+          .attr(
+            "d",
+            "M 0,-2 C -2.5,-6 -5,-8.5 -5,-12 C -5,-15  -2.8,-17.5 0,-17.5 C 2.8,-17.5 5,-15 5,-12 C 5,-8.5 2.5,-6 0,-2 Z"
+          )
+          .attr("fill", hub.color)
+          .attr("stroke", "#ffffff")
+          .attr("stroke-width", 0.8)
+          .attr("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.45))");
+
+        // Inner white dot in pin head
+        pinStem
+          .append("circle")
+          .attr("cx", 0)
+          .attr("cy", -12)
+          .attr("r", 1.8)
+          .attr("fill", "#ffffff");
+
+        // 4. Country label pill badge
+        const badgeGroup = pinStem
+          .append("g")
+          .attr("transform", "translate(7, -19)");
+
+        // Background pill
+        badgeGroup
+          .append("rect")
+          .attr("x", 0)
+          .attr("y", 0)
+          .attr("width", hub.name.length * 6.8 + 24)
+          .attr("height", 16)
+          .attr("rx", 8)
+          .attr("fill", "rgba(11, 25, 44, 0.92)")
+          .attr("stroke", hub.color)
+          .attr("stroke-width", 0.8)
+          .attr("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.4))");
+
+        // Text with Flag + Country Name
+        badgeGroup
+          .append("text")
+          .attr("x", 5)
+          .attr("y", 11.5)
+          .attr("font-size", "9px")
+          .attr("font-family", "system-ui, -apple-system, sans-serif")
+          .attr("font-weight", "700")
+          .attr("fill", "#ffffff")
+          .text(`${hub.flag} ${hub.name}`);
+      }
+    });
   }, [
     worldData,
     rotation,
@@ -805,16 +1021,44 @@ export function ContactWithGlobe({
               ))}
             </div>
 
-            <div className="relative overflow-hidden h-52">
-              <GlobeWireframe
-                className="w-full aspect-square max-w-full absolute top-0 left-0"
-                variant="wireframesolid"
-                autoRotate
-                autoRotateSpeed={0.45}
-                strokeWidth={0.6}
-                graticuleOpacity={0.12}
-              />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-zinc-50 dark:from-zinc-950 to-transparent" />
+            {/* Interactive Rotating Globe with Operating Hub Pins */}
+            <div className="relative w-full rounded-2xl border border-zinc-200/90 dark:border-zinc-800/90 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-md p-4 overflow-hidden flex flex-col items-center shadow-xs">
+              <div className="w-full flex items-center justify-between pb-2.5 border-b border-zinc-200/70 dark:border-zinc-800/70 mb-2">
+                <span className="text-[11px] font-mono uppercase tracking-widest text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Active Global Presence
+                </span>
+                <span className="text-[10px] font-mono text-[#4945ff] dark:text-[#8c94ff] font-bold">
+                  4 Corporate Hubs
+                </span>
+              </div>
+              
+              <div className="relative w-full aspect-square max-w-[340px] flex items-center justify-center">
+                <GlobeWireframe
+                  className="w-full h-full"
+                  variant="wireframesolid"
+                  autoRotate
+                  autoRotateSpeed={0.45}
+                  strokeWidth={0.7}
+                  graticuleOpacity={0.14}
+                />
+              </div>
+
+              {/* Hub Quick Legend Bar */}
+              <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-zinc-200/70 dark:border-zinc-800/70 mt-1">
+                {[
+                  { flag: "🇨🇦", country: "Canada", hub: "Toronto", color: "text-[#38bdf8]" },
+                  { flag: "🇺🇸", country: "USA", hub: "New York", color: "text-[#60a5fa]" },
+                  { flag: "🇮🇳", country: "India", hub: "Bangalore", color: "text-[#f59e0b]" },
+                  { flag: "🇦🇪", country: "UAE", hub: "Dubai", color: "text-[#10b981]" },
+                ].map((item) => (
+                  <div key={item.country} className="flex flex-col items-center text-center p-1.5 rounded-lg bg-zinc-100/70 dark:bg-zinc-800/50 text-[10px] font-mono">
+                    <span className="text-sm">{item.flag}</span>
+                    <span className="font-bold text-zinc-800 dark:text-zinc-200">{item.country}</span>
+                    <span className={`text-[9px] ${item.color}`}>{item.hub}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </motion.div>
 

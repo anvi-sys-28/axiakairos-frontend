@@ -29,9 +29,10 @@ export interface ServiceFormData {
   source?: string;
 }
 
-// TODO: Connect production API endpoint via VITE_FORM_ENDPOINT in .env
+// Submit request helper supporting custom endpoint or local backend contact logging
 export async function submitRequest(data: ServiceFormData): Promise<{ success: boolean; message: string }> {
-  const endpoint = import.meta.env.VITE_FORM_ENDPOINT;
+  const envObj = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : (typeof process !== 'undefined' && process.env ? process.env : {});
+  const endpoint = (envObj as any).VITE_FORM_ENDPOINT;
   if (endpoint) {
     const res = await fetch(endpoint, {
       method: 'POST',
@@ -44,19 +45,45 @@ export async function submitRequest(data: ServiceFormData): Promise<{ success: b
     return { success: true, message: 'Request submitted successfully.' };
   }
 
+  // Record submission in backend contact inbox
+  try {
+    const rawApi = (envObj as any).VITE_API_URL || '';
+    const apiBase = typeof rawApi === 'string' ? rawApi.replace(/\/$/, '') : '';
+    const contactUrl = apiBase ? `${apiBase}/api/contact` : (typeof window !== 'undefined' ? '/api/contact' : '');
+    if (contactUrl) {
+      await fetch(contactUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: data.fullName,
+          company: data.company,
+          email: data.email,
+          message: `[Phone: ${data.countryCode} ${data.phone}] [Source: ${data.source || 'service-request'}] ${data.message}`,
+        }),
+      });
+    }
+  } catch (err) {
+    console.warn('Backend message save notice:', err);
+  }
+
   // Simulated API response with network latency
-  await new Promise((resolve) => setTimeout(resolve, 900));
-  console.log('[Axia Kairos Service Request Submitted]:', data);
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  console.log('[Axia Kairos Request Submitted]:', data);
   return { success: true, message: 'Thank you. An enterprise advisor will be in touch within 24 hours.' };
 }
 
-interface ServiceRequestFormProps {
+export interface ServiceRequestFormProps {
   initialServiceSlug?: string;
   source?: string;
   badge?: string;
   title?: string;
   subtitle?: string;
   className?: string;
+  hideServiceSelect?: boolean;
+  messageLabel?: string;
+  messagePlaceholder?: string;
+  submitButtonText?: string;
+  theme?: 'default' | 'navy';
 }
 
 export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
@@ -66,7 +93,13 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
   title = 'Request an Enterprise Service',
   subtitle = 'Connect directly with an Axia Kairos principal consultant. We respect your confidentiality.',
   className = '',
+  hideServiceSelect = false,
+  messageLabel,
+  messagePlaceholder,
+  submitButtonText,
+  theme = 'default',
 }) => {
+  const isNavy = theme === 'navy';
   const [formData, setFormData] = useState<ServiceFormData>({
     fullName: '',
     email: '',
@@ -156,46 +189,59 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
 
   return (
     <div className={`w-full max-w-3xl mx-auto ${className}`} id="request-service">
-      <div className="bg-white dark:bg-[#0c1626] border border-slate-200/90 dark:border-white/10 rounded-2xl p-6 sm:p-10 shadow-xl transition-colors duration-200">
-        
+      <div
+        className={`${
+          isNavy
+            ? 'bg-[#071325]/95 border border-slate-700/80 shadow-2xl text-white'
+            : 'bg-white dark:bg-[#0c1626] border border-slate-200/90 dark:border-white/10 shadow-xl'
+        } rounded-2xl p-6 sm:p-10 transition-colors duration-200`}
+      >
         {/* Header */}
-        <div className="mb-8">
-          {badge && (
-            <div className="text-[11px] font-mono tracking-widest uppercase text-[#c2a675] font-semibold mb-2">
-              {badge}
-            </div>
-          )}
-          <h3 className="text-2xl sm:text-3xl font-bold text-[#0b192c] dark:text-white tracking-tight">
-            {title}
-          </h3>
-          {subtitle && (
-            <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400">
-              {subtitle}
-            </p>
-          )}
-        </div>
+        {(title || badge || subtitle) && (
+          <div className="mb-8">
+            {badge && (
+              <div className="text-[11px] font-mono tracking-widest uppercase text-[#c2a675] font-semibold mb-2">
+                {badge}
+              </div>
+            )}
+            {title && (
+              <h3 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isNavy ? 'text-white' : 'text-[#0b192c] dark:text-white'}`}>
+                {title}
+              </h3>
+            )}
+            {subtitle && (
+              <p className={`mt-2 text-sm sm:text-base ${isNavy ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                {subtitle}
+              </p>
+            )}
+          </div>
+        )}
 
         {status === 'success' ? (
-          <div className="p-8 text-center flex flex-col items-center bg-slate-50 dark:bg-white/5 rounded-xl border border-emerald-500/30">
-            <CheckCircle2 className="w-14 h-14 text-emerald-500 mb-4" />
-            <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-              Engagement Request Received
+          <div className="p-8 text-center flex flex-col items-center bg-slate-50/10 dark:bg-white/5 rounded-xl border border-emerald-500/40">
+            <CheckCircle2 className="w-14 h-14 text-emerald-400 mb-4" />
+            <h4 className={`text-xl font-bold mb-2 ${isNavy ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
+              Message Received
             </h4>
-            <p className="text-slate-600 dark:text-slate-300 max-w-md mb-6">
+            <p className={`max-w-md mb-6 ${isNavy ? 'text-slate-300' : 'text-slate-600 dark:text-slate-300'}`}>
               {serverMessage}
             </p>
             <button
               type="button"
               onClick={handleReset}
-              className="px-6 py-2.5 rounded-full bg-[#0b192c] dark:bg-white text-white dark:text-[#0b192c] text-sm font-medium hover:opacity-90 transition-opacity"
+              className={`px-6 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity ${
+                isNavy
+                  ? 'bg-white text-[#0b192c]'
+                  : 'bg-[#0b192c] dark:bg-white text-white dark:text-[#0b192c]'
+              }`}
             >
-              Submit Another Request
+              Send Another Message
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate className="space-y-5">
             {status === 'error' && (
-              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start space-x-3 text-red-600 dark:text-red-400 text-sm">
+              <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start space-x-3 text-red-500 text-sm">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                 <span>{serverMessage}</span>
               </div>
@@ -204,7 +250,12 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
             {/* Row 1: Name & Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label htmlFor="form-fullName" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                <label
+                  htmlFor="form-fullName"
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${
+                    isNavy ? 'text-slate-300' : 'text-slate-700 dark:text-slate-300'
+                  }`}
+                >
                   Full Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -214,9 +265,11 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   aria-invalid={!!errors.fullName}
                   aria-describedby={errors.fullName ? "form-fullName-error" : undefined}
-                  className={`w-full px-4 py-2.5 rounded-lg border text-sm text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 focus:outline-none focus:ring-2 focus:ring-axia-slate transition-all ${
-                    errors.fullName ? 'border-red-500' : 'border-slate-300 dark:border-white/15'
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isNavy
+                      ? 'bg-slate-950/70 text-white placeholder-slate-500 border-slate-700'
+                      : 'text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 border-slate-300 dark:border-white/15'
+                  } ${errors.fullName ? 'border-red-500' : ''}`}
                   placeholder="e.g. Eleanor Vance"
                 />
                 {errors.fullName && (
@@ -227,7 +280,12 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="form-email" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                <label
+                  htmlFor="form-email"
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${
+                    isNavy ? 'text-slate-300' : 'text-slate-700 dark:text-slate-300'
+                  }`}
+                >
                   Work Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -237,9 +295,11 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? "form-email-error" : undefined}
-                  className={`w-full px-4 py-2.5 rounded-lg border text-sm text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 focus:outline-none focus:ring-2 focus:ring-axia-slate transition-all ${
-                    errors.email ? 'border-red-500' : 'border-slate-300 dark:border-white/15'
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isNavy
+                      ? 'bg-slate-950/70 text-white placeholder-slate-500 border-slate-700'
+                      : 'text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 border-slate-300 dark:border-white/15'
+                  } ${errors.email ? 'border-red-500' : ''}`}
                   placeholder="eleanor@enterprise.com"
                 />
                 {errors.email && (
@@ -253,7 +313,12 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
             {/* Row 2: Company & Phone */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label htmlFor="form-company" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                <label
+                  htmlFor="form-company"
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${
+                    isNavy ? 'text-slate-300' : 'text-slate-700 dark:text-slate-300'
+                  }`}
+                >
                   Company Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -263,9 +328,11 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                   onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                   aria-invalid={!!errors.company}
                   aria-describedby={errors.company ? "form-company-error" : undefined}
-                  className={`w-full px-4 py-2.5 rounded-lg border text-sm text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 focus:outline-none focus:ring-2 focus:ring-axia-slate transition-all ${
-                    errors.company ? 'border-red-500' : 'border-slate-300 dark:border-white/15'
-                  }`}
+                  className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isNavy
+                      ? 'bg-slate-950/70 text-white placeholder-slate-500 border-slate-700'
+                      : 'text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 border-slate-300 dark:border-white/15'
+                  } ${errors.company ? 'border-red-500' : ''}`}
                   placeholder="Global Logistics Ltd."
                 />
                 {errors.company && (
@@ -276,7 +343,12 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
               </div>
 
               <div>
-                <label htmlFor="form-phone" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                <label
+                  htmlFor="form-phone"
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${
+                    isNavy ? 'text-slate-300' : 'text-slate-700 dark:text-slate-300'
+                  }`}
+                >
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="flex">
@@ -284,10 +356,18 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                     aria-label="Country code"
                     value={formData.countryCode}
                     onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
-                    className="px-2.5 py-2.5 rounded-l-lg border border-r-0 border-slate-300 dark:border-white/15 bg-slate-100 dark:bg-white/10 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-axia-slate"
+                    className={`px-3 py-2.5 rounded-l-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 shrink-0 ${
+                      isNavy
+                        ? 'bg-slate-900 text-white border-slate-700 border-r-0'
+                        : 'bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-white border-slate-300 dark:border-white/15 border-r-0'
+                    }`}
                   >
                     {COUNTRY_DIAL_CODES.map((c) => (
-                      <option key={`${c.code}-${c.country}`} value={c.code} className="text-slate-900 bg-white">
+                      <option
+                        key={c.code}
+                        value={c.code}
+                        className="text-slate-900 bg-white dark:bg-[#071325] dark:text-white"
+                      >
                         {c.flag} {c.code}
                       </option>
                     ))}
@@ -299,9 +379,11 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     aria-invalid={!!errors.phone}
                     aria-describedby={errors.phone ? "form-phone-error" : undefined}
-                    className={`w-full px-4 py-2.5 rounded-r-lg border text-sm text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 focus:outline-none focus:ring-2 focus:ring-axia-slate transition-all ${
-                      errors.phone ? 'border-red-500' : 'border-slate-300 dark:border-white/15'
-                    }`}
+                    className={`w-full px-4 py-2.5 rounded-r-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      isNavy
+                        ? 'bg-slate-950/70 text-white placeholder-slate-500 border-slate-700'
+                        : 'text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 border-slate-300 dark:border-white/15'
+                    } ${errors.phone ? 'border-red-500' : ''}`}
                     placeholder="9876543210"
                   />
                 </div>
@@ -313,29 +395,45 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
               </div>
             </div>
 
-            {/* Row 3: Service Selection */}
-            <div>
-              <label htmlFor="form-service" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Service Focus
-              </label>
-              <select
-                id="form-service"
-                value={formData.serviceSlug}
-                onChange={(e) => setFormData({ ...formData, serviceSlug: e.target.value })}
-                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 dark:border-white/15 text-sm text-slate-900 dark:text-white bg-slate-50/50 dark:bg-[#071325] focus:outline-none focus:ring-2 focus:ring-axia-slate"
-              >
-                {servicesData.map((s) => (
-                  <option key={s.slug} value={s.slug} className="text-slate-900 bg-white dark:bg-[#071325] dark:text-white">
-                    {s.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Row 3: Service Selection (Conditional) */}
+            {!hideServiceSelect && (
+              <div>
+                <label
+                  htmlFor="form-service"
+                  className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${
+                    isNavy ? 'text-slate-300' : 'text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  Service Focus
+                </label>
+                <select
+                  id="form-service"
+                  value={formData.serviceSlug}
+                  onChange={(e) => setFormData({ ...formData, serviceSlug: e.target.value })}
+                  className={`w-full px-4 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isNavy
+                      ? 'bg-slate-950/70 text-white border-slate-700'
+                      : 'text-slate-900 dark:text-white bg-slate-50/50 dark:bg-[#071325] border-slate-300 dark:border-white/15'
+                  }`}
+                >
+                  {servicesData.map((s) => (
+                    <option key={s.slug} value={s.slug} className="text-slate-900 bg-white dark:bg-[#071325] dark:text-white">
+                      {s.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Row 4: Message */}
             <div>
-              <label htmlFor="form-message" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                Brief Scope & Requirements <span className="text-red-500">*</span>
+              <label
+                htmlFor="form-message"
+                className={`block text-xs font-semibold uppercase tracking-wider mb-1.5 ${
+                  isNavy ? 'text-slate-300' : 'text-slate-700 dark:text-slate-300'
+                }`}
+              >
+                {messageLabel || 'Brief Scope & Requirements'} <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="form-message"
@@ -344,10 +442,12 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 aria-invalid={!!errors.message}
                 aria-describedby={errors.message ? "form-message-error" : undefined}
-                className={`w-full px-4 py-2.5 rounded-lg border text-sm text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 focus:outline-none focus:ring-2 focus:ring-axia-slate transition-all ${
-                  errors.message ? 'border-red-500' : 'border-slate-300 dark:border-white/15'
-                }`}
-                placeholder="Describe your current systems, timeline, and strategic goals..."
+                className={`w-full px-4 py-2.5 rounded-lg border text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  isNavy
+                    ? 'bg-slate-950/70 text-white placeholder-slate-500 border-slate-700'
+                    : 'text-slate-900 dark:text-white bg-slate-50/50 dark:bg-white/5 border-slate-300 dark:border-white/15'
+                } ${errors.message ? 'border-red-500' : ''}`}
+                placeholder={messagePlaceholder || 'Describe your current systems, timeline, and strategic goals...'}
               />
               {errors.message && (
                 <p id="form-message-error" role="alert" className="text-red-500 text-xs mt-1">
@@ -364,10 +464,10 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                   checked={formData.consent}
                   onChange={(e) => setFormData({ ...formData, consent: e.target.checked })}
                   aria-invalid={!!errors.consent}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-axia-navy focus:ring-axia-slate"
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  I agree to Axia Kairos processing my information in accordance with their privacy policy to respond to this enterprise service request.
+                <span className={`text-xs leading-relaxed ${isNavy ? 'text-slate-300' : 'text-slate-600 dark:text-slate-400'}`}>
+                  I consent to Axia Kairos processing my information in accordance with their privacy policy to respond to this request.
                 </span>
               </label>
               {errors.consent && (
@@ -382,7 +482,11 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 rounded-full bg-[#0b192c] dark:bg-white text-white dark:text-[#0b192c] font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
+                className={`w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 rounded-full font-medium text-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 ${
+                  isNavy
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-[#0b192c] dark:bg-white text-white dark:text-[#0b192c]'
+                }`}
               >
                 {status === 'loading' ? (
                   <>
@@ -391,16 +495,14 @@ export const ServiceRequestForm: React.FC<ServiceRequestFormProps> = ({
                   </>
                 ) : (
                   <>
-                    <span>Submit Service Inquiry</span>
+                    <span>{submitButtonText || 'Submit Service Inquiry'}</span>
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </>
                 )}
               </button>
             </div>
-
           </form>
         )}
-
       </div>
     </div>
   );

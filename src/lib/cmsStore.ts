@@ -398,7 +398,7 @@ export const DEFAULT_ABOUT_PAGE: AboutPageData = {
     ctaHref: '/careers',
     secondaryCtaLabel: 'Our Approach →',
     secondaryCtaHref: '/services',
-    showPhotos: true,
+    showPhotos: false,
     columns: 3,
     driftSeconds: 22,
     members: [
