@@ -15,6 +15,7 @@ import {
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
+import { useCMS } from '../lib/cmsStore';
 import { getBlogPost, blogs, type BlogPost, type Block } from '../data/blogs';
 
 // Safe formatted inline text helper without dangerouslySetInnerHTML
@@ -97,7 +98,8 @@ function RenderBlock({ block }: { block: Block }) {
 
 export function BlogPostDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const post = getBlogPost(slug || '');
+  const cms = useCMS();
+  const post = (cms.blogs && cms.blogs.find((b) => b.slug === slug)) || getBlogPost(slug || '');
   const [copied, setCopied] = useState(false);
 
   // 1. Friendly 404 if post not found

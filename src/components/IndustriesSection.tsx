@@ -283,9 +283,23 @@ export const INDUSTRIES_DATA: IndustryData[] = [
   }
 ];
 
-export function IndustriesSection() {
+export interface IndustriesSectionProps {
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  industries?: IndustryData[];
+}
+
+export function IndustriesSection({
+  eyebrow = "INDUSTRIES WE SERVE",
+  heading = "Specialized Transformation for Mission-Critical Sectors",
+  description = "Deep domain expertise across 12 regulated and fast-evolving global industries. We deliver purpose-engineered technology architectures that drive measurable enterprise impact.",
+  industries,
+}: IndustriesSectionProps = {}) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const activeIndustry = INDUSTRIES_DATA[activeIndex];
+  const itemsToUse = industries && industries.length > 0 ? industries : INDUSTRIES_DATA;
+  const safeIndex = activeIndex < itemsToUse.length ? activeIndex : 0;
+  const activeIndustry = itemsToUse[safeIndex] || itemsToUse[0];
   const navigate = useNavigate();
 
   const handleConsultation = () => {
@@ -312,15 +326,15 @@ export function IndustriesSection() {
           <div className="max-w-2xl">
             <div className="inline-flex items-center space-x-2 font-mono text-[#c2a675] tracking-[0.2em] text-[11px] sm:text-[12px] uppercase mb-3 select-none">
               <span className="w-2 h-2 rounded-full bg-[#c2a675] inline-block shadow-[0_0_8px_rgba(194,166,117,0.7)]" />
-              <span>INDUSTRIES WE SERVE</span>
+              <span>{eyebrow}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-bold text-[#0b192c] dark:text-white tracking-tight leading-[1.12]">
-              Specialized Transformation for Mission-Critical Sectors
+              {heading}
             </h2>
           </div>
 
           <p className="text-slate-700 dark:text-slate-300 text-[14.5px] sm:text-[15.5px] max-w-md leading-relaxed">
-            Deep domain expertise across 12 regulated and fast-evolving global industries. We deliver purpose-engineered technology architectures that drive measurable enterprise impact.
+            {description}
           </p>
         </div>
 
@@ -433,8 +447,8 @@ export function IndustriesSection() {
           <div className="lg:col-span-7 relative">
             {/* React Bits Pro Elastic Reel Component sitting directly in the section */}
             <ElasticReel
-              items={INDUSTRIES_DATA}
-              activeIndex={activeIndex}
+              items={itemsToUse}
+              activeIndex={safeIndex}
               onActiveChange={setActiveIndex}
               autoplay={true}
               autoplayInterval={5500}

@@ -1,7 +1,21 @@
 import FaqSections from './ui/faq-sections';
 import { DiamondBackdrop } from './ui/diamond-backdrop';
 
-export function FAQSection() {
+export interface FAQSectionProps {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  imageSrc?: string;
+  faqs?: Array<{ question: string; answer: string }>;
+}
+
+export function FAQSection({
+  eyebrow,
+  title,
+  description,
+  imageSrc,
+  faqs,
+}: FAQSectionProps = {}) {
   return (
     <section
       id="faqs"
@@ -12,7 +26,13 @@ export function FAQSection() {
       <DiamondBackdrop variant="faq" />
 
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16 relative z-10">
-        <FaqSections />
+        <FaqSections
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          imageSrc={imageSrc}
+          faqs={faqs}
+        />
       </div>
     </section>
   );

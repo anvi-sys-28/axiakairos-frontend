@@ -4,6 +4,7 @@ import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
 import { ServiceRequestForm } from '../components/ServiceRequestForm';
+import { useCMS } from '../lib/cmsStore';
 import { getServiceBySlug, caseStudiesData } from '../data/services';
 
 // Curated related background images for each enterprise service capability
@@ -24,7 +25,8 @@ const SERVICE_HERO_BG_MAP: Record<string, string> = {
 
 export function ServiceDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const service = getServiceBySlug(slug || '');
+  const cms = useCMS();
+  const service = (cms.services && cms.services.find((s) => s.slug === slug)) || getServiceBySlug(slug || '');
 
   // 1. Friendly 404 if unknown slug
   if (!service) {

@@ -15,6 +15,7 @@ import {
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
+import { useCMS } from '../lib/cmsStore';
 import { JobApplicationForm } from '../components/JobApplicationForm';
 import { getJobBySlug, getSimilarJobs } from '../data/jobs';
 
@@ -34,8 +35,8 @@ function formatPublishDate(isoDate: string): string {
 export const JobDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-
-  const job = slug ? getJobBySlug(slug) : undefined;
+  const cms = useCMS();
+  const job = (slug && cms.careers && cms.careers.find((j) => j.slug === slug)) || (slug ? getJobBySlug(slug) : undefined);
 
   // Unknown slug or closed job -> Friendly fallback
   if (!job || job.status !== 'open') {

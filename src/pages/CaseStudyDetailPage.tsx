@@ -4,11 +4,13 @@ import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
 import { ServiceRequestForm } from '../components/ServiceRequestForm';
+import { useCMS } from '../lib/cmsStore';
 import { getCaseStudy, caseStudies, type CaseStudyItem } from '../data/caseStudies';
 
 export function CaseStudyDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const caseStudy = getCaseStudy(slug || '');
+  const cms = useCMS();
+  const caseStudy = (cms.caseStudies && cms.caseStudies.find((cs) => cs.slug === slug)) || getCaseStudy(slug || '');
 
   // 1. Friendly 404 if unknown slug
   if (!caseStudy) {

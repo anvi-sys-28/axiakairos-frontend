@@ -371,6 +371,7 @@ export {
   importCMSData,
   CMS_STORAGE_KEY,
   CMS_UPDATE_EVENT,
+  DEFAULT_ABOUT_PAGE,
   type CMSData,
 } from './cmsStore';
 

@@ -9,10 +9,12 @@ import { FAQSection } from './components/FAQSection';
 import { Footer } from './components/Footer';
 import { SEO } from './components/SEO';
 import { siteContent } from './content/site';
+import { useCMS } from './lib/cmsStore';
 
 const SLIDE_DURATION_MS = 6000;
 
 export function App() {
+  const cms = useCMS();
   // Check if preloader has already completed or been seen
   const [preloaderDone, setPreloaderDone] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -102,13 +104,40 @@ export function App() {
         </div>
 
         {/* Section 2: Sticky Left Media, Scrolling Right Content Feature Section */}
-        <StickyMediaSection onCtaClick={handleAbout} />
+        <StickyMediaSection
+          categoryTag={cms.homePage.aboutAxiaSection?.categoryTag}
+          title={cms.homePage.aboutAxiaSection?.title}
+          description={cms.homePage.aboutAxiaSection?.description}
+          descriptionSecondary={cms.homePage.aboutAxiaSection?.descriptionSecondary}
+          videoUrl={cms.homePage.aboutAxiaSection?.videoUrl}
+          posterUrl={cms.homePage.aboutAxiaSection?.posterUrl}
+          badgeText={cms.homePage.aboutAxiaSection?.badgeText}
+          fleetTag={cms.homePage.aboutAxiaSection?.fleetTag}
+          metrics={cms.homePage.aboutAxiaSection?.metrics}
+          capabilities={cms.homePage.aboutAxiaSection?.capabilities}
+          marqueeItems={cms.homePage.aboutAxiaSection?.marqueeItems}
+          ctaHeadline={cms.homePage.aboutAxiaSection?.ctaHeadline}
+          ctaSubtext={cms.homePage.aboutAxiaSection?.ctaSubtext}
+          ctaButtonText={cms.homePage.aboutAxiaSection?.ctaButtonText}
+          onCtaClick={handleAbout}
+        />
 
         {/* Section 3: Industries We Serve (with Elastic Reel & Synced Descriptions) */}
-        <IndustriesSection />
+        <IndustriesSection
+          eyebrow={cms.homePage.industriesSection?.eyebrow}
+          heading={cms.homePage.industriesSection?.heading}
+          description={cms.homePage.industriesSection?.description}
+          industries={cms.homePage.industriesSection?.items as any}
+        />
 
         {/* Section 4: Frequently Asked Questions (FAQ) */}
-        <FAQSection />
+        <FAQSection
+          eyebrow={cms.homePage.faqSection?.eyebrow}
+          title={cms.homePage.faqSection?.title}
+          description={cms.homePage.faqSection?.description}
+          imageSrc={cms.homePage.faqSection?.imageSrc}
+          faqs={cms.homePage.faqSection?.faqs}
+        />
       </main>
 
       {/* Shared Footer */}

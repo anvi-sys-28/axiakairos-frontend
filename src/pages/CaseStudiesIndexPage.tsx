@@ -4,6 +4,7 @@ import { ArrowRight, Search, Sparkles, Filter, Calendar, Tag } from 'lucide-reac
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
+import { useCMS } from '../lib/cmsStore';
 import {
   caseStudies,
   caseStudiesIndexHero,
@@ -13,6 +14,8 @@ import {
 } from '../data/caseStudies';
 
 export function CaseStudiesIndexPage() {
+  const cms = useCMS();
+  const caseStudiesList = cms.caseStudies && cms.caseStudies.length > 0 ? cms.caseStudies : caseStudies;
   const [searchParams, setSearchParams] = useSearchParams();
   const activeIndustryParam = searchParams.get('industry') || 'All';
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,7 +41,7 @@ export function CaseStudiesIndexPage() {
 
   // Filter case studies by activeIndustry and search query
   const filteredCaseStudies = useMemo(() => {
-    return caseStudies.filter((cs) => {
+    return caseStudiesList.filter((cs) => {
       // Industry filter
       const matchesIndustry = activeIndustry === 'All' || cs.industry === activeIndustry;
       if (!matchesIndustry) return false;

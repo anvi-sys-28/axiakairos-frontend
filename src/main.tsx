@@ -10,19 +10,48 @@ import './styles/index.css';
 // Sync latest published content from backend on launch
 syncCMSFromServer().catch(() => {});
 
-const AboutPage = lazy(() => import('./pages/AboutPage'));
-const ServicesIndexPage = lazy(() => import('./pages/ServicesIndexPage'));
-const ServiceDetailPage = lazy(() => import('./pages/ServiceDetailPage'));
-const CaseStudiesIndexPage = lazy(() => import('./pages/CaseStudiesIndexPage'));
-const CaseStudyDetailPage = lazy(() => import('./pages/CaseStudyDetailPage'));
-const BlogsIndexPage = lazy(() => import('./pages/BlogsIndexPage'));
-const BlogPostDetailPage = lazy(() => import('./pages/BlogPostDetailPage'));
-const CareersLandingPage = lazy(() => import('./pages/CareersLandingPage'));
-const JobDetailPage = lazy(() => import('./pages/JobDetailPage'));
-const ContactPage = lazy(() => import('./pages/ContactPage'));
-const AssistantPage = lazy(() => import('./features/assistant/AssistantPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+// Resilience: Auto-recover from stale chunks when a new version is deployed on Vercel
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (error: any) {
+      console.warn('Dynamic chunk fetch failed. Refreshing bundle for latest assets...', error);
+      const retryKey = 'chunk_retry_' + window.location.pathname;
+      const alreadyRetried = sessionStorage.getItem(retryKey);
+      if (!alreadyRetried) {
+        sessionStorage.setItem(retryKey, 'true');
+        window.location.reload();
+        return new Promise(() => {});
+      }
+      sessionStorage.removeItem(retryKey);
+      throw error;
+    }
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    event.preventDefault();
+    window.location.reload();
+  });
+}
+
+const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'));
+const ServicesIndexPage = lazyWithRetry(() => import('./pages/ServicesIndexPage'));
+const ServiceDetailPage = lazyWithRetry(() => import('./pages/ServiceDetailPage'));
+const CaseStudiesIndexPage = lazyWithRetry(() => import('./pages/CaseStudiesIndexPage'));
+const CaseStudyDetailPage = lazyWithRetry(() => import('./pages/CaseStudyDetailPage'));
+const BlogsIndexPage = lazyWithRetry(() => import('./pages/BlogsIndexPage'));
+const BlogPostDetailPage = lazyWithRetry(() => import('./pages/BlogPostDetailPage'));
+const CareersLandingPage = lazyWithRetry(() => import('./pages/CareersLandingPage'));
+const JobDetailPage = lazyWithRetry(() => import('./pages/JobDetailPage'));
+const ContactPage = lazyWithRetry(() => import('./pages/ContactPage'));
+const AssistantPage = lazyWithRetry(() => import('./features/assistant/AssistantPage'));
+const AdminPage = lazyWithRetry(() => import('./pages/AdminPage'));
+const NotFoundPage = lazyWithRetry(() => import('./pages/NotFoundPage'));
 
 // Lazy-load AXIA Assistant chatbot so it loads only after the home page is idle
 const AssistantLauncher = lazy(() =>

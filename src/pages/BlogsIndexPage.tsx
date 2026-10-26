@@ -4,18 +4,21 @@ import { ArrowRight, Search, Sparkles, Clock, Calendar, ArrowUpDown, BookOpen } 
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
+import { useCMS } from '../lib/cmsStore';
 import { blogs, blogsIndexHero, blogsIndexSeo, type BlogPost } from '../data/blogs';
 
 const POSTS_PER_PAGE = 9;
 
 export function BlogsIndexPage() {
+  const cms = useCMS();
+  const blogsList = cms.blogs && cms.blogs.length > 0 ? cms.blogs : blogs;
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'latest' | 'oldest'>('latest');
   const [visibleCount, setVisibleCount] = useState(POSTS_PER_PAGE);
 
   // Filter and sort posts
   const filteredAndSortedPosts = useMemo(() => {
-    let result = [...blogs];
+    let result = [...blogsList];
 
     // Search filter
     if (searchQuery.trim()) {

@@ -14,6 +14,7 @@ import {
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
+import { useCMS } from '../lib/cmsStore';
 import {
   careersLandingData,
   jobs,
@@ -35,33 +36,35 @@ function formatPublishDate(isoDate: string): string {
 }
 
 export const CareersLandingPage: React.FC = () => {
+  const cms = useCMS();
+  const jobsList = cms.careers && cms.careers.length > 0 ? cms.careers : jobs;
   const navigate = useNavigate();
   const [selectedDept, setSelectedDept] = useState<Department>('All Departments');
 
   // Compute counts per department
   const deptCounts = useMemo(() => {
     const counts: Record<string, number> = {
-      'All Departments': jobs.filter((j) => j.status === 'open').length,
+      'All Departments': jobsList.filter((j) => j.status === 'open').length,
     };
     DEPARTMENTS.forEach((dept) => {
       if (dept !== 'All Departments') {
-        counts[dept] = jobs.filter(
+        counts[dept] = jobsList.filter(
           (j) => j.status === 'open' && j.department.toLowerCase() === dept.toLowerCase()
         ).length;
       }
     });
     return counts;
-  }, []);
+  }, [jobsList]);
 
   // Filter jobs
   const filteredJobs = useMemo(() => {
     if (selectedDept === 'All Departments') {
-      return jobs.filter((j) => j.status === 'open');
+      return jobsList.filter((j) => j.status === 'open');
     }
-    return jobs.filter(
+    return jobsList.filter(
       (j) => j.status === 'open' && j.department.toLowerCase() === selectedDept.toLowerCase()
     );
-  }, [selectedDept]);
+  }, [selectedDept, jobsList]);
 
   const scrollToOpenings = (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => {
     e.preventDefault();

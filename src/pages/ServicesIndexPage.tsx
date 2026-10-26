@@ -4,9 +4,12 @@ import { ArrowRight, Search, Sparkles } from 'lucide-react';
 import { Header } from '../components/Header';
 import { Footer } from '../components/Footer';
 import { SEO } from '../components/SEO';
+import { useCMS } from '../lib/cmsStore';
 import { servicesData, servicesIndexHero, servicesIndexSeo, caseStudiesData } from '../data/services';
 
 export function ServicesIndexPage() {
+  const cms = useCMS();
+  const servicesList = cms.services && cms.services.length > 0 ? cms.services : servicesData;
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '');
 
@@ -17,14 +20,14 @@ export function ServicesIndexPage() {
     }
   }, [searchParams]);
 
-  // Filter 12 services live by title and shortDescription
+  // Filter services live by title and shortDescription
   const filteredServices = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return servicesData;
-    return servicesData.filter(
+    if (!q) return servicesList;
+    return servicesList.filter(
       (s) => s.title.toLowerCase().includes(q) || s.shortDescription.toLowerCase().includes(q)
     );
-  }, [searchQuery]);
+  }, [searchQuery, servicesList]);
 
   // Featured 3 case studies for the bottom strip
   const featuredCaseStudies = useMemo(() => {
@@ -51,7 +54,7 @@ export function ServicesIndexPage() {
             '@context': 'https://schema.org',
             '@type': 'ItemList',
             name: 'Axia Kairos Enterprise Services',
-            itemListElement: servicesData.map((s, idx) => ({
+            itemListElement: servicesList.map((s, idx) => ({
               '@type': 'ListItem',
               position: idx + 1,
               name: s.title,
